@@ -1,0 +1,4 @@
+[submodule "yggdrasil"]
+	path = yggdrasil
+	url = https://github.com/cleverfox/yggdrasil-ng
+	branch = cf/implement_transports

@@ -1,0 +1,26 @@
+[package]
+name = "yggstack"
+version = "0.1.0"
+edition = "2021"
+description = "Yggstack-compatible userspace mode for Yggdrasil-ng"
+license = "MPL-2.0"
+
+[[bin]]
+name = "yggstack"
+path = "src/main.rs"
+
+[dependencies]
+yggdrasil = { path = "../../yggdrasil/crates/yggdrasil" }
+tokio = { version = "1", features = ["full"] }
+getopts = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+json5 = "0.4"
+hex = "0.4"
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+rand = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "local-time"] }
+time = { version = "0.3", features = ["macros"] }
+toml = "0.8"
+smoltcp = { version = "0.12", default-features = false, features = ["std", "proto-ipv6", "socket-tcp", "socket-udp", "medium-ip"] }

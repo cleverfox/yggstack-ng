@@ -1,0 +1,9 @@
+{
+  "PrivateKey": "a9f8be0db8147d72d4a2743e7a252f4d6cd50d49fa1a166968f3dd21078dae5a2e9ebf7dfec39054690fe9b882dd48d8f4fcd9dfe9ae65a61502deab3f35ea19",
+  "Peers": [],
+  "Listen": ["tcp://127.0.0.1:19301"],
+  "AdminListen": "none",
+  "AllowedPublicKeys": [],
+  "NodeInfoPrivacy": false,
+  "NodeInfo": {}
+}
