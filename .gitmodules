@@ -1,4 +1,4 @@
 [submodule "yggdrasil"]
 	path = yggdrasil
-	url = https://github.com/cleverfox/yggdrasil-ng
+	url = https://github.com/Revertron/Yggdrasil-ng.git
 	branch = cf/implement_transports
