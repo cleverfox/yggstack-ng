@@ -50,6 +50,8 @@ impl CompatConfig {
             node_info_privacy: self.node_info_privacy,
             allowed_public_keys: self.allowed_public_keys,
             multicast_interfaces: vec![],
+            firewall: Default::default(),
+            group_password: String::new(),
         }
     }
 }

@@ -319,7 +319,7 @@ pub struct SmolStack {
 impl SmolStack {
     pub fn new(core: Arc<Core>) -> Arc<Self> {
         let mtu = core.mtu() as usize;
-        let rwc = ReadWriteCloser::new(core.clone(), core.mtu());
+        let rwc = ReadWriteCloser::new(core.clone(), core.mtu(), None);
         core.set_path_notify(rwc.clone());
 
         let queues = Arc::new(SharedQueues::new());
