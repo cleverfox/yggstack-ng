@@ -20,6 +20,10 @@ pub struct CompatConfig {
     pub node_info_privacy: bool,
     #[serde(rename = "NodeInfo")]
     pub node_info: serde_json::Value,
+    /// Closed-network group password (yggdrasil-ng extension, not in Go yggstack).
+    /// When non-empty, sessions only complete with nodes sharing the same password.
+    #[serde(rename = "GroupPassword")]
+    pub group_password: String,
 }
 
 impl Default for CompatConfig {
@@ -33,6 +37,7 @@ impl Default for CompatConfig {
             allowed_public_keys: vec![],
             node_info_privacy: false,
             node_info: serde_json::json!({}),
+            group_password: String::new(),
         }
     }
 }
@@ -51,7 +56,7 @@ impl CompatConfig {
             allowed_public_keys: self.allowed_public_keys,
             multicast_interfaces: vec![],
             firewall: Default::default(),
-            group_password: String::new(),
+            group_password: self.group_password,
         }
     }
 }
@@ -147,6 +152,17 @@ mod tests {
         assert_eq!(cfg.peers.len(), 0);
         assert_eq!(cfg.admin_listen, "none");
         assert_eq!(cfg.node_info_privacy, false);
+    }
+
+    #[test]
+    fn group_password_passes_through() {
+        let cfg = parse_compat_config(r#"{"GroupPassword": "s3cr3t"}"#).expect("parse");
+        assert_eq!(cfg.group_password, "s3cr3t");
+        let rt = cfg.into_runtime_config();
+        assert_eq!(rt.group_password, "s3cr3t");
+        // Absent field defaults to empty (open network)
+        let rt = parse_compat_config("{}").unwrap().into_runtime_config();
+        assert_eq!(rt.group_password, "");
     }
 
     #[test]
