@@ -51,6 +51,8 @@ impl CompatConfig {
             admin_listen: self.admin_listen,
             if_name: "none".to_string(),
             if_mtu: 65535,
+            if_dns_servers: Vec::new(),
+            tunnel_routing: Default::default(),
             node_info: json_to_toml(&self.node_info),
             node_info_privacy: self.node_info_privacy,
             allowed_public_keys: self.allowed_public_keys,

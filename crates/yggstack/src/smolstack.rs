@@ -270,6 +270,8 @@ struct StackState {
 
 const EPHEMERAL_PORT_START: u16 = 40000;
 const EPHEMERAL_PORT_END: u16 = 65000;
+/// Upper bound on how long the background poll loop sleeps between ticks.
+const MAX_POLL_INTERVAL: Duration = Duration::from_millis(100);
 
 impl StackState {
     /// Remove a socket and free its associated buffers and ephemeral port.
@@ -319,7 +321,7 @@ pub struct SmolStack {
 impl SmolStack {
     pub fn new(core: Arc<Core>) -> Arc<Self> {
         let mtu = core.mtu() as usize;
-        let rwc = ReadWriteCloser::new(core.clone(), core.mtu(), None);
+        let rwc = ReadWriteCloser::new(core.clone(), core.mtu(), None, None);
         core.set_path_notify(rwc.clone());
 
         let queues = Arc::new(SharedQueues::new());
@@ -368,7 +370,46 @@ impl SmolStack {
             writer.write_loop().await;
         });
 
+        // Background poll driver: keeps the smoltcp interface ticking even when
+        // no TCP/UDP/SOCKS session is active. Without this, packets with no
+        // associated socket (notably ICMPv6 echo requests) are enqueued but
+        // never processed, so the node never answers pings.
+        let poller = stack.clone();
+        tokio::spawn(async move {
+            poller.poll_loop().await;
+        });
+
         stack
+    }
+
+    async fn poll_loop(&self) {
+        loop {
+            let delay = {
+                let mut st = self.state.lock().await;
+                let now = Self::now();
+                let StackState {
+                    iface,
+                    sockets,
+                    device,
+                    ..
+                } = &mut *st;
+                let _ = iface.poll(now, device, sockets);
+                iface.poll_delay(now, sockets)
+            };
+
+            // Wake early when inbound packets arrive; otherwise honor smoltcp's
+            // suggested delay, capped so a missed `notify_waiters` (the future is
+            // only registered once polled) still bounds reply latency.
+            let wait = delay
+                .map(|d| Duration::from_millis(d.total_millis()))
+                .unwrap_or(MAX_POLL_INTERVAL)
+                .min(MAX_POLL_INTERVAL);
+
+            tokio::select! {
+                _ = self.queues.notify.notified() => {},
+                _ = tokio::time::sleep(wait) => {},
+            }
+        }
     }
 
     async fn read_loop(&self, rwc: Arc<ReadWriteCloser>) {
