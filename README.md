@@ -23,6 +23,19 @@ yggstack --autoconf --socks 127.0.0.1:1080
 # then point a SOCKS5-aware client at 127.0.0.1:1080
 ```
 
+### Peers in `--autoconf` mode
+
+`--autoconf` generates an ephemeral config with no peers. To add peers without
+writing a config file, set the `YGG_PEERS` environment variable to a
+comma-separated list of peer URIs:
+
+```bash
+YGG_PEERS=tls://10.10.11.15:15123,quic://10.10.21.22:443 yggstack --autoconf
+```
+
+Supported schemes: `tcp`, `tls`, `ws`, `wss`, `quic`. `YGG_PEERS` also augments
+(and de-duplicates against) peers from `--useconf`/`--useconffile`.
+
 See `yggstack --help` for all options.
 
 ## Build

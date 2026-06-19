@@ -107,7 +107,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_timer(timer)
         .init();
 
-    let compat_cfg = if m.opt_present("autoconf") {
+    let mut compat_cfg = if m.opt_present("autoconf") {
         CompatConfig::default()
     } else if m.opt_present("useconf") {
         read_compat_config_from_stdin().map_err(|e| format!("{e}"))?
@@ -117,6 +117,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         eprintln!("Specify one of: --autoconf, --useconf, --useconffile");
         std::process::exit(1);
     };
+
+    // Merge peers from the YGG_PEERS environment variable. This is the primary
+    // way to supply peers in --autoconf mode (which otherwise has none), but it
+    // also augments peers from --useconf/--useconffile. Comma-separated list of
+    // peer URIs, e.g. YGG_PEERS=tls://10.10.11.15:15123,quic://10.10.21.22:443
+    if let Ok(env_peers) = std::env::var("YGG_PEERS") {
+        let mut added: Vec<String> = Vec::new();
+        for peer in env_peers.split(',').map(|p| p.trim()).filter(|p| !p.is_empty()) {
+            if !compat_cfg.peers.iter().any(|e| e == peer) && !added.iter().any(|e| e == peer) {
+                added.push(peer.to_string());
+            }
+        }
+        if !added.is_empty() {
+            tracing::info!("Adding {} peer(s) from YGG_PEERS: {}", added.len(), added.join(", "));
+            compat_cfg.peers.extend(added);
+        }
+    }
 
     if m.opt_present("normaliseconf") {
         if !m.opt_present("json") {
